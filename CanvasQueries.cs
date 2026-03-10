@@ -5,10 +5,9 @@ public static class CanvasQueries
     public static string AllCourses => @"
 query {
     allCourses {
-        name
         id
         _id
-        imageUrl
+        name
     }
 }
 ";
@@ -16,10 +15,9 @@ query {
     public static string Course(string id) => $@"
 query {{
     course(id: ""{id}"") {{
-        name
         id
         _id
-        imageUrl
+        name
     }}
 }}
 ";
@@ -29,24 +27,52 @@ query {{
     course(id: ""{courseId}"") {{
         _id
         discussionsConnection{{
-            nodes {{
-                title
-                createdAt
-                id
-                _id
-                message
-                author
+            edges {{
+                cursor
+                node {{
+                    
+                }}
             }}
         }}
     }}
 }}
 ";
     
-    public static string AllAnnouncements(string courseId) => $@"
+    public static string CourseAnnouncements(string courseId, string? after = null, string? before = null, int? first = null,
+        int? last = null)
+    {
+        string parameters = (after != null ? $"after: \"{after}\", " : "") + (before != null ? $"before: \"{before}\", " : "") + (first != null ? $"first: {first}, " : "");
+        return $@"
 query {{
-    course(id: ""{courseId}"") {{
+    course(id: {courseId}) {{
+        id
         _id
-        discussionsConnection(filter: {{isAnnouncement: true}}) {{
+        discussionsConnection({parameters}, filter: {{isAnnouncement: true}}) {{
+            edges {{
+                cursor
+                node {{
+                    id
+                }}
+            }}
+        }}
+    }}
+}}
+";
+    }
+
+    public static string AllCoursesAnnouncements(string? after = null, string? before = null, int? first = null,
+        int? last = null)
+    {
+        string parameters = (after != null ? $"after: \"{after}\", " : "") + 
+                            (before != null ? $"before: \"{before}\", " : "") + 
+                            (first != null ? $"first: {first}, " : "") + 
+                            (last != null ? $"last: {last}, " : "");
+        return $@"
+query {{
+    allCourses {{
+        id
+        _id
+        discussionsConnection({parameters}, filter: {{isAnnouncement: true}}) {{
             nodes {{
                 title
                 createdAt
@@ -62,6 +88,29 @@ query {{
             }}
         }}
     }}
+}}
+";
+    }
+
+    public static string Node(string typeName, string id, string fieldName) => $@"
+query {{
+  node(id: ""{id}"") {{
+    ... on {typeName} {{
+      {fieldName}
+    }}
+  }}
+}}
+";
+    
+    public static string ChildNode(string typeName, string id, string fieldName) => $@"
+query {{
+  node(id: ""{id}"") {{
+    ... on {typeName} {{
+        {fieldName} {{
+            id
+        }}
+    }}
+  }}
 }}
 ";
 }

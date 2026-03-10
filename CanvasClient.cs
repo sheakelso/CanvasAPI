@@ -21,7 +21,7 @@ public class CanvasClient
         HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
     }
 
-    private async Task<JToken?> RunQuery(string query)
+    public async Task<JToken?> RunQuery(string query)
     {
         Dictionary<string, string> queryParams = new Dictionary<string, string>();
         queryParams.Add("query", query);
@@ -58,65 +58,49 @@ public class CanvasClient
     public async Task<Course[]?> GetAllCourses()
     {
         JToken? json = await RunQuery(CanvasQueries.AllCourses);
-        return Deserialise<Course[]>(json?["allCourses"]);
+        return Deserialize<Course[]>(json?["allCourses"]);
     }
 
-    public async Task<Course?> GetCourse(string id)
+    public async Task<Course?> GetCourse(string courseId)
     {
-        JToken? json = await RunQuery(CanvasQueries.Course(id));
-        return Deserialise<Course>(json?["course"]);
-    }
-
-    public async Task<Discussion[]?> GetAllDiscussions(string courseId)
-    {
-        JToken? json = await RunQuery(CanvasQueries.AllDiscussions(courseId));
-        string? _courseID = json?["course"]?["_id"]?.ToString();
-        JToken? nodes = json?["course"]?["discussionsConnection"]?["nodes"];
-        if (nodes == null || _courseID == null) return null;
-
-        foreach (JToken node in nodes.Children())
-        {
-            node["_courseID"] = JToken.Parse($"\"{_courseID}\"");
-        }
-
-        return Deserialise<Discussion[]>(nodes);
+        JToken? json = await RunQuery(CanvasQueries.Course(courseId));
+        return Deserialize<Course>(json?["course"]);
     }
     
-    public async Task<Discussion[]?> GetAllAnnouncements(string courseId)
+    public async Task<T?> GetNodeField<T>(string typeName, string id, string fieldName)
     {
-        JToken? json = await RunQuery(CanvasQueries.AllAnnouncements(courseId));
-        string? _courseID = json?["course"]?["_id"]?.ToString();
-        JToken? nodes = json?["course"]?["discussionsConnection"]?["nodes"];
-        if (nodes == null || _courseID == null) return null;
-
-        foreach (JToken node in nodes.Children())
-        {
-            node["_courseID"] = JToken.Parse($"\"{_courseID}\"");
-        }
-        
-        return Deserialise<Discussion[]>(nodes);
+        JToken? json = await RunQuery(CanvasQueries.Node(typeName, id, fieldName));
+        JToken? field = json?["node"]?[fieldName];
+        return Deserialize<T>(field);
     }
 
-    private T? Deserialise<T>(JToken? json)
+    public async Task<T?> GetChildNode<T>(string typeName, string id, string fieldName)
+    {
+        JToken? json = await RunQuery(CanvasQueries.ChildNode(typeName, id, fieldName));
+        JToken? field = json?["node"]?[fieldName];
+        return Deserialize<T>(field);
+    }
+
+    public T? Deserialize<T>(JToken? json)
     {
         if(json == null) return default;
         T? obj = json.ToObject<T>();
-        if(obj is CanvasObject canvasObject) InitialiseObject(canvasObject);
-        if(obj is IEnumerable<CanvasObject> canvasObjects) InitialiseArray(canvasObjects);
+        if(obj is Node canvasObject) InitialiseObject(canvasObject);
+        if(obj is IEnumerable<Node> canvasObjects) InitialiseArray(canvasObjects);
         return obj;
     }
     
-    private T? InitialiseObject<T>(T? obj) where T : CanvasObject
+    private T? InitialiseObject<T>(T? obj) where T : Node
     {
         if(obj == null) return null;
         obj.Client = this;
         return obj;
     }
     
-    private T? InitialiseArray<T>(T? objs) where T : IEnumerable<CanvasObject>
+    private T? InitialiseArray<T>(T? objs) where T : IEnumerable<Node>
     {
         if (objs == null) return default;
-        foreach (CanvasObject obj in objs)
+        foreach (Node obj in objs)
         {
             InitialiseObject(obj);
         }
