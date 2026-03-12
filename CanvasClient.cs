@@ -57,28 +57,22 @@ public class CanvasClient
 
     public async Task<Course[]?> GetAllCourses()
     {
-        JToken? json = await RunQuery(CanvasQueries.AllCourses);
+        Console.WriteLine(Endpoint);
+        JToken? json = await RunQuery(CanvasQueries.AllCourses().ToString());
         return Deserialize<Course[]>(json?["allCourses"]);
     }
 
-    public async Task<Course?> GetCourse(string courseId)
+    public async Task<T?> GetNode<T>(string id) where T : Node
     {
-        JToken? json = await RunQuery(CanvasQueries.Course(courseId));
-        return Deserialize<Course>(json?["course"]);
+        JToken? json = await RunQuery(CanvasQueries.Node<T>(id).ToString());
+        return Deserialize<T>(json?["node"]);
     }
     
-    public async Task<T?> GetNodeField<T>(string typeName, string id, string fieldName)
+    public async Task<TC?> GetNodeField<TP, TC>(string id, string fieldName) where TP : Node
     {
-        JToken? json = await RunQuery(CanvasQueries.Node(typeName, id, fieldName));
+        JToken? json = await RunQuery(CanvasQueries.NodeField<TP, TC>(id, fieldName).ToString());
         JToken? field = json?["node"]?[fieldName];
-        return Deserialize<T>(field);
-    }
-
-    public async Task<T?> GetChildNode<T>(string typeName, string id, string fieldName)
-    {
-        JToken? json = await RunQuery(CanvasQueries.ChildNode(typeName, id, fieldName));
-        JToken? field = json?["node"]?[fieldName];
-        return Deserialize<T>(field);
+        return Deserialize<TC>(field);
     }
 
     public T? Deserialize<T>(JToken? json)

@@ -1,9 +1,14 @@
 namespace CanvasAPI;
 
-public class Discussion(string id) : Node("Discussion", id)
+public class Discussion(string id) : Node(id)
 {
-    public async Task<string?> GetTitle() => await GetField<string>("title");
-    public async Task<User?> GetAuthor() => await GetField<User>("author");
-    public async Task<DateTimeOffset> GetPostedAt() => await GetField<DateTimeOffset>("postedAt");
-    public async Task<string?> GetMessage() => await GetField<string>("message");
+    [DefaultNodeProperty] public string _id { get; set; }
+    [DefaultNodeProperty] public string title { get; set; }
+    [DefaultNodeProperty] public DateTimeOffset? postedAt{ get; set; }
+    
+    public Course? Course { get; set; }
+    public string Link => $"{Course?.Link}/discussion_topics/{_id}";
+    
+    public async Task<User?> GetAuthor() => await GetField<Discussion, User>("author");
+    public async Task<string?> GetMessage() => await GetField<Discussion, string>("message");
 }

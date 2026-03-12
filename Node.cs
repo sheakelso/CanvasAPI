@@ -2,9 +2,16 @@ using System.Reflection;
 
 namespace CanvasAPI;
 
-public abstract class Node(string typeName, string id)
+public class DefaultNodePropertyAttribute : Attribute { }
+
+public class NodeTypeNameAttribute(string name) : Attribute
 {
-    public readonly string TypeName = typeName;
+    public readonly string TypeName = name;
+}
+
+public abstract class Node(string id)
+{
+    public static string GetTypeName<T>() => typeof(T).Name;
     public string Id { get; private set; } = id;
     
     private CanvasClient? _client;
@@ -33,11 +40,9 @@ public abstract class Node(string typeName, string id)
         }
     }
 
-    public async Task<T?> GetField<T>(string fieldName)
+    public async Task<TC?> GetField<TP, TC>(string fieldName) where TP : Node
     {
         if (Client == null) return default;
-        if(typeof(T).IsAssignableTo(typeof(Node))) 
-            return await Client.GetChildNode<T>(TypeName, Id, fieldName);
-        return await Client.GetNodeField<T>(TypeName, Id, fieldName);
+        return await Client.GetNodeField<TP, TC>(Id, fieldName);
     }
 }

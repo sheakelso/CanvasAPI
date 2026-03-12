@@ -1,7 +1,7 @@
 namespace CanvasAPI;
 
-public class User(string id) : Node("User", id)
+public class User(string id) : Node(id)
 {
-    public async Task<string?> GetName() => await GetField<string>("name");
-    public async Task<string?> GetAvatarUrl() => await GetField<string>("avatarUrl");
+    [DefaultNodeProperty] public string name { get; set; }
+    [DefaultNodeProperty] public string avatarUrl { get; set; }
 }

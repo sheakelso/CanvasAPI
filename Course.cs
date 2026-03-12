@@ -2,13 +2,15 @@ using Newtonsoft.Json.Linq;
 
 namespace CanvasAPI;
 
-public class Course(string id) : Node("Course", id)
+public class Course(string id) : Node(id)
 {
-    public string _Id { get; set; }
+    [DefaultNodeProperty] public string _id { get; set; }
+    [DefaultNodeProperty] public string name { get; set; }
+    [DefaultNodeProperty] public string courseCode { get; set; }
+    [DefaultNodeProperty] public string imageUrl { get; set; }
 
-    public async Task<string?> GetName() => await GetField<string?>("name");
-    public async Task<string?> GetImageUrl() => await GetField<string?>("imageUrl");
-
+    public string Link => $"{Client?.BaseAddress}/courses/{_id}";
+    
     public async Task<Dictionary<string, Discussion>?> GetDiscussions(string? after = null, string? before = null,
         int? first = null, int? last = null)
     {
@@ -22,12 +24,15 @@ public class Course(string id) : Node("Course", id)
         string query = $@"
 query {{
   node(id: ""{Id}"") {{
-    ... on {TypeName} {{
+    ... on {Node.GetTypeName<Course>()} {{
         discussionsConnection{parameters} {{
             edges {{
                 cursor
                 node {{
+                    _id
                     id
+                    title
+                    postedAt
                 }}
             }}
         }}
@@ -45,6 +50,7 @@ query {{
             string? cursor = edge["cursor"]?.ToString();
             Discussion? discussion = Client.Deserialize<Discussion>(edge["node"]);
             if(discussion == null || cursor == null) continue;
+            discussion.Course = this;
             result.Add(cursor, discussion);
         }
         return result;
