@@ -45,4 +45,13 @@ public abstract class Node(string id)
         if (Client == null) return default;
         return await Client.GetNodeField<TP, TC>(Id, fieldName);
     }
+
+    public async Task<bool> RunMutation(string name, Dictionary<string, object> input)
+    {
+        if (Client == null) return false;
+        CanvasQueryField query = new CanvasQueryField(name, CanvasQueryField.CanvasOperation.Mutation);
+        query.WithParameter("input", input);
+        query.WithField(new CanvasQueryField("errors").WithField("message"));
+        return await Client.RunMutation(query);
+    }
 }

@@ -37,6 +37,7 @@ public class CanvasClient
 
             if (json.TryGetValue("errors", out var errors))
             {
+                Console.WriteLine(query);
                 Console.WriteLine("Error in query: ");
                 foreach (JToken error in errors)
                 {
@@ -55,9 +56,15 @@ public class CanvasClient
         return null;
     }
 
+    public async Task<bool> RunMutation(CanvasQueryField query)
+    {
+        JToken? json = await RunQuery(query.ToString());
+        if(json?[query.Name]  == null) return false;
+        return true;
+    }
+
     public async Task<Course[]?> GetAllCourses()
     {
-        Console.WriteLine(Endpoint);
         JToken? json = await RunQuery(CanvasQueries.AllCourses().ToString());
         return Deserialize<Course[]>(json?["allCourses"]);
     }

@@ -11,4 +11,10 @@ public class Discussion(string id) : Node(id)
     
     public async Task<User?> GetAuthor() => await GetField<Discussion, User>("author");
     public async Task<string?> GetMessage() => await GetField<Discussion, string>("message");
+
+    public async Task<bool> SetReadState(bool read)
+    {
+        return await RunMutation("updateDiscussionReadState",
+            new Dictionary<string, object> { { "discussionTopicId", _id }, { "read", read } });
+    }
 }
